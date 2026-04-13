@@ -1,43 +1,43 @@
-const weatherApi = "https://api.weather.gov/alerts/active?area=";
+let BASE_URL = "https://api.weather.gov/alerts/active?area=";
 
+let input = document.getElementById("state-input");
+let button = document.getElementById("fetch-alerts");
+let results = document.getElementById("alerts-display");
+let errorDiv = document.getElementById("error-message");
 
-const input = document.getElementById("state-input");
-const button = document.getElementById("fetch-alerts");
-const results = document.getElementById("alerts-display");
-const errorDiv = document.getElementById("error-message");
-
-
+// clear UI
 function clearUI() {
   results.innerHTML = "";
   errorDiv.textContent = "";
   errorDiv.classList.add("hidden");
 }
 
-async function fetchWeatherAlerts(state) {
-  const response = await fetch(`${weatherApi}${state}`);
+// fetch data
+async function getAlerts(state) {
+  let response = await fetch(BASE_URL + state);
 
   if (!response.ok) {
-    throw new Error("Failed to fetch weather alerts");
+    throw new Error("Something went wrong");
   }
 
-  const data = await response.json();
+  let data = await response.json();
   return data;
 }
 
+// display alerts
+function showAlerts(data) {
+  let count = data.features.length;
 
-function displayAlerts(data) {
-  const count = data.features.length;
+  // summary message (IMPORTANT for tests)
+  let summary = document.createElement("h2");
+  summary.textContent = data.title + ": " + count;
+  results.appendChild(summary);
 
-  
-  const title = document.createElement("h2");
-  title.textContent = `Weather Alerts: ${count}`;
-  results.appendChild(title);
+  // list
+  let list = document.createElement("ul");
 
-  // list of alerts
-  const list = document.createElement("ul");
-
-  data.features.forEach((alert) => {
-    const item = document.createElement("li");
+  data.features.forEach(function(alert) {
+    let item = document.createElement("li");
     item.textContent = alert.properties.headline;
     list.appendChild(item);
   });
@@ -45,32 +45,31 @@ function displayAlerts(data) {
   results.appendChild(list);
 }
 
-// show error message
+// show error
 function showError(message) {
   errorDiv.textContent = message;
   errorDiv.classList.remove("hidden");
 }
 
-
-button.addEventListener("click", async () => {
-  const state = input.value.trim().toUpperCase();
+// button click
+button.addEventListener("click", async function() {
+  let state = input.value.trim().toUpperCase();
 
   clearUI();
 
-  
-  if (!state) {
-    showError("Please enter a state code");
+  // input validation (simple)
+  if (state === "" || state.length !== 2) {
+    showError("Enter a valid state code");
     return;
   }
 
   try {
-    const data = await fetchWeatherAlerts(state);
+    let data = await getAlerts(state);
 
-    displayAlerts(data);
+    showAlerts(data);
 
-    // clear input after success
-    input.value = "";
-  } catch (error) {
-    showError(error.message);
+    input.value = ""; // clear input
+  } catch (err) {
+    showError(err.message);
   }
 });
